@@ -5,16 +5,11 @@ using UnityEngine;
 public class PlayerManager : MonoBehaviour {
     
     private float _movespeed;
-    private GameObject _mainCamera;
-
     private Vector3 before;
-
-    private bool asdf;
 
     private void Awake()
     {
         _movespeed = 5;
-        _mainCamera = GameObject.Find("Main Camera");
     }
 
     // Use this for initialization
@@ -48,7 +43,7 @@ public class PlayerManager : MonoBehaviour {
     {
         if(collision.gameObject.tag == "Wall")
         {
-            Debug.Log("tlfgod");
+            
             transform.position = before;
         }
     }
@@ -57,7 +52,7 @@ public class PlayerManager : MonoBehaviour {
     {
         if (collision.gameObject.tag == "Wall")
         {
-            Debug.Log("탈출");
+            
         }
     }
 }

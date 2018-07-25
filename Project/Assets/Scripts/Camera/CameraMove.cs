@@ -6,11 +6,11 @@ using UnityEngine;
 public class CameraMove : MonoBehaviour {
 
     private GameObject _player;
-    [Range(-500,500)]
+    [Range(-100,100)]
     public float x;
-    [Range(-500, 500)]
+    [Range(-100, 100)]
     public float y;
-    [Range(-500, 500)]
+    [Range(-100, 100)]
     public float z;
 
     private void Awake()
@@ -31,7 +31,7 @@ public class CameraMove : MonoBehaviour {
 
     private void Move()
     {
-        transform.position = _player.transform.position + new Vector3(0, 4, -5);
-       // transform.position = Vector3.Lerp(transform.position, _player.transform.position + new Vector3(0, 4, -5), 0.1f);
+        //transform.position = _player.transform.position + new Vector3(0, 4, -5);
+        transform.position = Vector3.Lerp(transform.position, _player.transform.position + new Vector3(0, 4, -5), 0.1f);
     }
 }
