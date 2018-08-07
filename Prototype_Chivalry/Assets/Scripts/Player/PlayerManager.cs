@@ -4,26 +4,48 @@ using UnityEngine;
 
 public class PlayerManager : MonoBehaviour {
 
-    private CharacterStat _stat;    // Player's Stat
-    private List<int> _buffList;
-    // Movement
-    // Skill
+    private Character[] _characters;
+    private float _moveSpeed;
+
+    Vector3 temp;
 
     private void Awake()
     {
-        _stat = new CharacterStat("홍길동", 10, 10, 10, 10, 10, 5);
-        // _buffList = new List<>();
+        _characters = new Character[3];
+        _moveSpeed = 5f;
     }
 
     // Use this for initialization
     void Start () {
-		
+        Object prefab = Resources.Load("Character/Character");
+
+        for (int i = 0; i < 3; i++)
+        {
+            Transform pos = transform.Find("Position").transform.Find((i+1).ToString());
+            Character tmp = ((GameObject)Instantiate(prefab, pos.position, pos.rotation, pos)).GetComponent<Character>();
+            tmp.PositionNumber = (i + 1);
+            _characters[i] = tmp;
+        }
 	}
 	
 	// Update is called once per frame
 	void Update () {
-        PlayerMove();
-	}
+        temp = transform.position;
+
+        Move();
+
+        if (Input.GetMouseButton(0) == true)
+            _moveSpeed = 10f;
+        else
+            _moveSpeed = 5f;
+
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+            _characters[0].UseSkill();
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+            _characters[1].UseSkill();
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+            _characters[2].UseSkill();
+    }
 
     public void AddBuff(/*버프 정보를 넣자.*/)
     {
@@ -37,7 +59,7 @@ public class PlayerManager : MonoBehaviour {
         // 버프 번호에 맞는 버프 효과를 찾아서 버프리스트에 제거하고 효과를 없애준다.
     }
 
-    private void PlayerMove()
+    public void Move()
     {
         float _moveHori = Input.GetAxisRaw("Horizontal");
         float _moveVerti = Input.GetAxisRaw("Vertical");
@@ -45,18 +67,19 @@ public class PlayerManager : MonoBehaviour {
         if (_moveHori == 0 && _moveVerti == 0)
             return;
 
-        Vector3 movement = new Vector3(_moveHori, 0, _moveVerti) * Time.deltaTime * _stat.Movespeed;
+        Vector3 movement = new Vector3(_moveHori, 0, _moveVerti) * Time.deltaTime * _moveSpeed;
         transform.position += movement;
 
         Quaternion quaternion = Quaternion.LookRotation(movement);
+
         transform.rotation = Quaternion.Slerp(transform.rotation, quaternion, 0.5f);
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollisionStay(Collision collision)
     {
         if(collision.gameObject.tag == "Wall")
         {
-           
+            //transform.position = temp;
         }
     }
 

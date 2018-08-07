@@ -11,7 +11,6 @@ using UnityEngine;
  * Stat정보를 float배열로 선언한 뒤, 속성으로 다가갈 수 있도록???
  * 
  */
-
 public class CharacterStat : BasicStat{
 
     public override string Name { get { return name; } }
