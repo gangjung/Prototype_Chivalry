@@ -61,8 +61,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Battle_2\BattleManager2.cs" />
+    <Compile Include="Assets\Battle_2\PlayerManager2.cs" />
     <Compile Include="Assets\Scripts\Camera\CameraMove.cs" />
     <Compile Include="Assets\Scripts\Common\Enums.cs" />
+    <Compile Include="Assets\Scripts\MainMenu\MenuButton.cs" />
+    <Compile Include="Assets\Scripts\Manager\MainManuManager.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerManager.cs" />
     <Compile Include="Assets\Scripts\Units\BasicCondition.cs" />
     <Compile Include="Assets\Scripts\Units\BasicStat.cs" />

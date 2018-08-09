@@ -13,4 +13,13 @@ public class TestWeapon : MonoBehaviour {
 	void Update () {
 	    	
 	}
+
+    private void OnTriggerEnter(Collider other)
+    {
+        Debug.Log("asdf");
+        if(other.tag == "Wall")
+        {
+            Destroy(gameObject);
+        }
+    }
 }

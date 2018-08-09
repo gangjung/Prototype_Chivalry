@@ -475,7 +475,7 @@ GameObject:
   - component: {fileID: 1296763007}
   m_Layer: 0
   m_Name: down
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -562,7 +562,7 @@ GameObject:
   - component: {fileID: 1345891825}
   m_Layer: 0
   m_Name: up
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -636,48 +636,6 @@ MeshFilter:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1345891823}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1001 &1351318091
-Prefab:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4987373547078642, guid: 4db1ecfbc591d0842b7b015fcdb2b8b6, type: 2}
-      propertyPath: m_LocalPosition.x
-      value: 0.6900764
-      objectReference: {fileID: 0}
-    - target: {fileID: 4987373547078642, guid: 4db1ecfbc591d0842b7b015fcdb2b8b6, type: 2}
-      propertyPath: m_LocalPosition.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 4987373547078642, guid: 4db1ecfbc591d0842b7b015fcdb2b8b6, type: 2}
-      propertyPath: m_LocalPosition.z
-      value: -0.42099643
-      objectReference: {fileID: 0}
-    - target: {fileID: 4987373547078642, guid: 4db1ecfbc591d0842b7b015fcdb2b8b6, type: 2}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4987373547078642, guid: 4db1ecfbc591d0842b7b015fcdb2b8b6, type: 2}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4987373547078642, guid: 4db1ecfbc591d0842b7b015fcdb2b8b6, type: 2}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4987373547078642, guid: 4db1ecfbc591d0842b7b015fcdb2b8b6, type: 2}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4987373547078642, guid: 4db1ecfbc591d0842b7b015fcdb2b8b6, type: 2}
-      propertyPath: m_RootOrder
-      value: 4
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 4db1ecfbc591d0842b7b015fcdb2b8b6, type: 2}
-  m_IsPrefabAsset: 0
 --- !u!1 &1936737478
 GameObject:
   m_ObjectHideFlags: 0
@@ -691,7 +649,7 @@ GameObject:
   - component: {fileID: 1936737480}
   m_Layer: 0
   m_Name: left
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -22,7 +22,7 @@ public class Character : MonoBehaviour{
     // 그래서 Awake에 해준다.
     private void Awake()
     {
-        asdf = Resources.Load("Weapons/Cube") as GameObject;
+        asdf = Resources.Load("Weapons/Dagger") as GameObject;
         _position = transform.parent;
 
         _stat = new CharacterStat("홍길동", 10, 10, 10, 10, 10, 5);
@@ -72,6 +72,7 @@ public class Character : MonoBehaviour{
 
     }
 
+    // 스킬관련 코루틴은 어느 한 곳에 모아놨다가, 필요한 부분만 불러서 사용할 수 있도록 처리하면 좋을 듯.
     private IEnumerator SkillSkill()
     {
         yield return new WaitForSeconds(0.3f);
