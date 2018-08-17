@@ -1,0 +1,7 @@
+C:\Users\cru65\git\Prototype_Chivalry\Login_Server\Login_Server\bin\Debug\Login_Server.exe.config
+C:\Users\cru65\git\Prototype_Chivalry\Login_Server\Login_Server\bin\Debug\Login_Server.exe
+C:\Users\cru65\git\Prototype_Chivalry\Login_Server\Login_Server\bin\Debug\Login_Server.pdb
+C:\Users\cru65\git\Prototype_Chivalry\Login_Server\Login_Server\obj\Debug\Login_Server.csprojAssemblyReference.cache
+C:\Users\cru65\git\Prototype_Chivalry\Login_Server\Login_Server\obj\Debug\Login_Server.csproj.CoreCompileInputs.cache
+C:\Users\cru65\git\Prototype_Chivalry\Login_Server\Login_Server\obj\Debug\Login_Server.exe
+C:\Users\cru65\git\Prototype_Chivalry\Login_Server\Login_Server\obj\Debug\Login_Server.pdb
