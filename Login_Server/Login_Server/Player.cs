@@ -41,6 +41,7 @@ namespace Login_Server
                 accept_event = new SocketAsyncEventArgs();
                 accept_event.Completed += new EventHandler<SocketAsyncEventArgs>(Accept_event_complete);
 
+                // Thread로 만들어준 이유는 메인 thread에서 움직일 때, 혹시라도 입력 대기상태에 들어가면, Listen을 할 수 없기 때문이다.
                 new Thread(Listening).Start();
                     
             }catch(SystemException e)
