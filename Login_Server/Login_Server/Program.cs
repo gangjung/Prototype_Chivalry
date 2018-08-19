@@ -12,33 +12,36 @@ namespace Login_Server
     {
         static void Main(string[] args)
         {
-            TcpListener listener = new TcpListener(IPAddress.Any, 8080);
-            listener.Start();
+            //TcpListener listener = new TcpListener(IPAddress.Any, 8080);
+            //listener.Start();
 
-            byte[] buff = new byte[1024];
+            //byte[] buff = new byte[1024];
 
-            while (true)
-            {
-                Console.WriteLine("Connect");
+            //while (true)
+            //{
+            //    Console.WriteLine("Connect");
 
-                TcpClient tc = listener.AcceptTcpClient();
-                NetworkStream stream = tc.GetStream();
+            //    TcpClient tc = listener.AcceptTcpClient();
+            //    NetworkStream stream = tc.GetStream();
 
-                int a; 
+            //    int a; 
 
-                while ((a = stream.Read(buff, 0, buff.Length)) > 0)
-                {
-                    Console.WriteLine(a);
-                    Console.WriteLine(buff.ToString());
-                    stream.Write(buff, 0, buff.Length);
-                }
-                Console.WriteLine(a);
+            //    while ((a = stream.Read(buff, 0, buff.Length)) > 0)
+            //    {
+            //        Console.WriteLine(a);
+            //        Console.WriteLine(buff.ToString());
+            //        stream.Write(buff, 0, buff.Length);
+            //    }
+            //    Console.WriteLine(a);
 
-                Console.WriteLine("Connect Finish");
+            //    Console.WriteLine("Connect Finish");
 
-                stream.Close();
-                tc.Close();
-            }
+            //    stream.Close();
+            //    tc.Close();
+
+            Login_Service login_Service = new Login_Service();
+            login_Service.Start("127.0.0.1", 8080);
+            
         }
     }
 }
