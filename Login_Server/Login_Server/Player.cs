@@ -79,11 +79,6 @@ namespace Login_Server
             }
         }
 
-        public bool Read()
-        {
-            return true;
-        }
-
         // 왜 따로 만들어줬나??? 좀 더 명확하게 함수를 판단하고 사용하게 하기 위해서 ㅇㅇ
         private void Accept_event_complete(object sender, SocketAsyncEventArgs e)
         {
