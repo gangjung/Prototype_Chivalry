@@ -41,6 +41,7 @@ namespace Login_Server
                 accept_event = new SocketAsyncEventArgs();
                 accept_event.Completed += new EventHandler<SocketAsyncEventArgs>(Accept_event_complete);
 
+                // Thread로 실행시켜주는 이유는, 혹시라도 메인Thread에서 입력을 받게 된다면, listen이 중지될 수 있기에, 서브Thread로 빼준다.
                 new Thread(Listening).Start();
                     
             }catch(SystemException e)
