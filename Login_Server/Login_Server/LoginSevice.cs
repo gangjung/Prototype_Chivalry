@@ -11,15 +11,31 @@ namespace Login_Server
 {
     class Login_Service
     {
-        Socket listen_socket;
-        SocketAsyncEventArgs accept_event;
-        AutoResetEvent event_controll;
+        private Socket listen_socket;
 
-        Socket asdf;
+        private BufferManager buffer_manager;
 
-        public Login_Service()
+        private SocketAsyncEventArgs accept_event;
+        private SocketAsyncEventArgsPool recieve_pool;
+        private SocketAsyncEventArgsPool send_pool;
+
+        private AutoResetEvent event_controll;
+
+        private Dictionary<string, Thread> connect_list;
+
+        private int max_connect_count;
+        private int connect_count;
+
+        public Login_Service(int capacity)
         {
+            // 최대 동접자 수 * (recieve, send) * buffersize
+            buffer_manager = new BufferManager(max_connect_count * 2 * 1024, 1024);
             accept_event = null;
+            recieve_pool = new SocketAsyncEventArgsPool();
+            send_pool = new SocketAsyncEventArgsPool();
+            connect_list = new Dictionary<string, Thread>();
+            max_connect_count = capacity;
+            connect_count = 0;
         }
 
         public void Start(string ip, int port)
@@ -41,6 +57,8 @@ namespace Login_Server
                 accept_event = new SocketAsyncEventArgs();
                 accept_event.Completed += new EventHandler<SocketAsyncEventArgs>(Accept_event_complete);
 
+
+
                 // Thread로 실행시켜주는 이유는, 혹시라도 메인Thread에서 입력을 받게 된다면, listen이 중지될 수 있기에, 서브Thread로 빼준다.
                 new Thread(Listening).Start();
                     
@@ -56,6 +74,7 @@ namespace Login_Server
 
             event_controll = new AutoResetEvent(false);
             
+
 
             while (true)
             {
