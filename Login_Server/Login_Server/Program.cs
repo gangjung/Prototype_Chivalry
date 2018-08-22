@@ -36,7 +36,7 @@ namespace Login_Server
 
             //    Console.WriteLine("Connect Finish");
 
-            //    stream.Close();
+            //    stream.Close(); 
             //    tc.Close();
 
             Login_Service login_Service = new Login_Service();
