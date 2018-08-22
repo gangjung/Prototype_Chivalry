@@ -44,7 +44,7 @@
   <ItemGroup>
     <Compile Include="BufferManager.cs" />
     <Compile Include="Listen.cs" />
-    <Compile Include="LoginService%28test%29.cs" />
+    <Compile Include="LoginService.cs" />
     <Compile Include="LoginSevice.cs" />
     <Compile Include="SocketAsyncEventArgsPool.cs" />
     <Compile Include="Program.cs" />
