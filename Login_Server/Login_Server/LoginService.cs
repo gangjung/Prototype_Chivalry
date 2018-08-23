@@ -7,108 +7,16 @@ using System.Net.Sockets;
 using System.Net;
 using System.Threading;
 using System.Runtime.Serialization;
+using MySql.Data.MySqlClient;
 
 namespace Login_Server
 {
-    class Packet
-    {
-        public Socket client;
-
-        private int HEADERSIZE;
-
-        private string id;
-        private string pw;
-
-        private int type;
-
-        private byte[] buffer;
-        private int totalDataSize;
-        private int currentIdx;
-
-        public Packet()
-        {
-            HEADERSIZE = 2;
-            buffer = new byte[1024];
-        }
-
-        public void OnReceive(byte[] buffer, int offset, int bytesize)
-        {
-            int bufferIdx = offset;
-            int copysize = 0;
-            int remainSize = bytesize;
-
-            // 헤더파일을 읽고나서 남아있는 부분을 일거우기 위해 반복문을 사용.
-            while (remainSize > 0)
-            {
-                if (currentIdx < HEADERSIZE)
-                {
-                    copysize = HEADERSIZE - currentIdx;
-
-                    if (remainSize < copysize)
-                        copysize = remainSize;
-
-                    Array.Copy(buffer, bufferIdx, this.buffer, currentIdx, copysize);
-
-                    bufferIdx += copysize;
-                    currentIdx += copysize;
-
-                    // 헤더를 다 안받아왔으므로 다시 receive해야한다.
-                    if (currentIdx != HEADERSIZE)
-                        return;
-
-                    totalDataSize = GetTotalSize();
-                    remainSize -= HEADERSIZE;
-                }
-
-                copysize = remainSize;
-
-                if (copysize == 0)
-                    return;
-
-                Array.Copy(buffer, bufferIdx, this.buffer, currentIdx, copysize);
-                currentIdx += copysize;
-
-                if (currentIdx < totalDataSize)
-                    return;
-                else
-                {
-                    CompletePacket();
-                    return;
-                }
-            }
-        }
-
-        // 콜백함수로 만들어서 다른 곳에 전달해줘도 상관없음.
-        // MSDN을 참고하면서 확인해도 괜찮을 듯.
-        public void CompletePacket()
-        {
-            string result = Encoding.ASCII.GetString(buffer, HEADERSIZE, totalDataSize - HEADERSIZE);
-
-            string[] results = result.Split('/');
-            id = results[0];
-            pw = results[1];
-
-            Console.WriteLine(id + "/" + pw);
-        }
-
-        public int GetTotalSize()
-        {
-            //Console.WriteLine(buffer);
-            if (HEADERSIZE == 2)
-                //return BitConverter.ToInt16(buffer, 0);
-                return Int32.Parse( Encoding.ASCII.GetString(buffer));
-            else if (HEADERSIZE == 4)
-                return BitConverter.ToInt32(buffer, 0);
-
-            return 0;
-        }
-    }
-
     class LoginService
     {
         private Socket listener;
         private SocketAsyncEventArgs accept_event;
         private SocketAsyncEventArgs receive_event;
+        private SocketAsyncEventArgs send_event;
         // 이거 send, receive 두개 만드는게 좋다.
         private AutoResetEvent autoResetEvent;
         private int _wait_capacity;
@@ -118,6 +26,9 @@ namespace Login_Server
             _wait_capacity = wait_capacity;
             accept_event = new SocketAsyncEventArgs();
             receive_event = new SocketAsyncEventArgs();
+            receive_event.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessReceive);
+            send_event = new SocketAsyncEventArgs();
+            send_event.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessSend);
         }
 
         public void Start(string ip, int port)
@@ -184,12 +95,12 @@ namespace Login_Server
                 Console.WriteLine("Success to connect");
 
                 Socket client = e.AcceptSocket;
-                Packet packet = new Packet();
-                packet.client = client;
+                CToken token = new CToken();
+                token.client = client;
 
-                e.UserToken = packet;
+                e.UserToken = token;
                 
-                Receive(packet);
+                Receive(token);
             }
             else
             {
@@ -199,13 +110,8 @@ namespace Login_Server
             autoResetEvent.Set();
         }
 
-        private void Receive(Packet packet)
+        private void Receive(CToken packet)
         {
-            receive_event.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessReceive);
-
-            Console.WriteLine(packet);
-            Console.WriteLine(packet.client);
-            Console.WriteLine(receive_event);
             // 이부분처럼 버퍼를 셋 안해주면 오류 발생함.
             receive_event.SetBuffer(new byte[1024], 0, 1024);
             receive_event.UserToken = packet;
@@ -221,15 +127,23 @@ namespace Login_Server
 
         private void ProcessReceive(object sender, SocketAsyncEventArgs e)
         {
-            Packet packet = e.UserToken as Packet;
+            CToken token = e.UserToken as CToken;
 
             if (e.LastOperation == SocketAsyncOperation.Receive)
             {
                 if(e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
-                    packet.OnReceive(e.Buffer, e.Offset, e.BytesTransferred);
+                    token.OnReceive(e.Buffer, e.Offset, e.BytesTransferred);
 
-                    bool pending = packet.client.ReceiveAsync(e);
+                    if (token.isComplete == true)
+                    {
+                        Console.WriteLine("받을거 다 받았습니다.");
+
+                        Send(token);
+                        return;
+                    }
+
+                    bool pending = token.client.ReceiveAsync(e);
 
                     if(pending == false)
                     {
@@ -238,11 +152,40 @@ namespace Login_Server
                 }
                 else
                 {
-                    packet.client.Close();
+                    token.client.Close();
                 }
             }
         }
 
-        private void Send()
+        private void Send(CToken usertoken)
+        {
+            List<ArraySegment<byte>> list = new List<ArraySegment<byte>>();
+            list.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(usertoken.token)));
+            list.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(usertoken.port)));
+
+            send_event.BufferList = list;
+            send_event.UserToken = usertoken;
+
+            bool pending = usertoken.client.SendAsync(send_event);
+
+            if(pending == false)
+            {
+                ProcessSend(null, send_event);
+            }
+            
+        }
+
+        private void ProcessSend(object sender, SocketAsyncEventArgs e)
+        {
+            if(e.SocketError != SocketError.Success || e.BytesTransferred <= 0)
+            {
+                Console.WriteLine("Send 실패");
+                return;
+            }
+
+            Console.WriteLine("전송 성공!");
+            ((CToken)e.UserToken).client.Close();
+            Console.WriteLine("기존 클라이언트와 연결 종료!");
+        }
     }
 }
