@@ -39,7 +39,7 @@ namespace Login_Server
             //    stream.Close(); 
             //    tc.Close();
 
-            Login_Service login_Service = new Login_Service(100);
+            LoginService login_Service = new LoginService(100);
             login_Service.Start("127.0.0.1", 8080);
             
         }

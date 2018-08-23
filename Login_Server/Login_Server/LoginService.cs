@@ -12,6 +12,8 @@ namespace Login_Server
 {
     class Packet
     {
+        public Socket client;
+
         private int HEADERSIZE;
 
         private string id;
@@ -51,7 +53,7 @@ namespace Login_Server
                     currentIdx += copysize;
 
                     // 헤더를 다 안받아왔으므로 다시 receive해야한다.
-                    if (currentIdx == HEADERSIZE)
+                    if (currentIdx != HEADERSIZE)
                         return;
 
                     totalDataSize = GetTotalSize();
@@ -64,12 +66,14 @@ namespace Login_Server
                     return;
 
                 Array.Copy(buffer, bufferIdx, this.buffer, currentIdx, copysize);
+                currentIdx += copysize;
 
                 if (currentIdx < totalDataSize)
                     return;
                 else
                 {
                     CompletePacket();
+                    return;
                 }
             }
         }
@@ -78,17 +82,21 @@ namespace Login_Server
         // MSDN을 참고하면서 확인해도 괜찮을 듯.
         public void CompletePacket()
         {
-            string result = Encoding.ASCII.GetString(buffer, 0, totalDataSize - HEADERSIZE);
+            string result = Encoding.ASCII.GetString(buffer, HEADERSIZE, totalDataSize - HEADERSIZE);
 
             string[] results = result.Split('/');
             id = results[0];
             pw = results[1];
+
+            Console.WriteLine(id + "/" + pw);
         }
 
         public int GetTotalSize()
         {
+            //Console.WriteLine(buffer);
             if (HEADERSIZE == 2)
-                return BitConverter.ToInt16(buffer, 0);
+                //return BitConverter.ToInt16(buffer, 0);
+                return Int32.Parse( Encoding.ASCII.GetString(buffer));
             else if (HEADERSIZE == 4)
                 return BitConverter.ToInt32(buffer, 0);
 
@@ -101,6 +109,7 @@ namespace Login_Server
         private Socket listener;
         private SocketAsyncEventArgs accept_event;
         private SocketAsyncEventArgs receive_event;
+        // 이거 send, receive 두개 만드는게 좋다.
         private AutoResetEvent autoResetEvent;
         private int _wait_capacity;
 
@@ -108,6 +117,7 @@ namespace Login_Server
         {
             _wait_capacity = wait_capacity;
             accept_event = new SocketAsyncEventArgs();
+            receive_event = new SocketAsyncEventArgs();
         }
 
         public void Start(string ip, int port)
@@ -127,6 +137,10 @@ namespace Login_Server
                 listener.Listen(_wait_capacity);
 
                 accept_event.Completed += new EventHandler<SocketAsyncEventArgs>(AcceptComplete);
+
+                Thread th = new Thread(Listening);
+                //th.IsBackground = true;
+                th.Start();
             }
             catch(SystemException e)
             {
@@ -170,20 +184,34 @@ namespace Login_Server
                 Console.WriteLine("Success to connect");
 
                 Socket client = e.AcceptSocket;
+                Packet packet = new Packet();
+                packet.client = client;
+
+                e.UserToken = packet;
                 
+                Receive(packet);
             }
             else
             {
                 Console.WriteLine("Fail to Connect");
             }
+
+            autoResetEvent.Set();
         }
 
-        private void Receive(Socket client)
+        private void Receive(Packet packet)
         {
-            if (receive_event == null)
-                receive_event.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessReceive);
+            receive_event.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessReceive);
 
-            bool pending = client.ReceiveAsync(receive_event);
+            Console.WriteLine(packet);
+            Console.WriteLine(packet.client);
+            Console.WriteLine(receive_event);
+            // 이부분처럼 버퍼를 셋 안해주면 오류 발생함.
+            receive_event.SetBuffer(new byte[1024], 0, 1024);
+            receive_event.UserToken = packet;
+                
+            bool pending = packet.client.ReceiveAsync(receive_event);
+
             if(pending == false)
             {
                 ProcessReceive(null, receive_event);
@@ -193,13 +221,28 @@ namespace Login_Server
 
         private void ProcessReceive(object sender, SocketAsyncEventArgs e)
         {
+            Packet packet = e.UserToken as Packet;
+
             if (e.LastOperation == SocketAsyncOperation.Receive)
             {
-                if(e.SocketError == SocketError.Success)
+                if(e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
+                    packet.OnReceive(e.Buffer, e.Offset, e.BytesTransferred);
 
+                    bool pending = packet.client.ReceiveAsync(e);
+
+                    if(pending == false)
+                    {
+                        ProcessReceive(null, e);
+                    }
+                }
+                else
+                {
+                    packet.client.Close();
                 }
             }
         }
+
+        private void Send()
     }
 }
