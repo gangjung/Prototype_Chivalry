@@ -46,7 +46,6 @@
     <Compile Include="BufferManager.cs" />
     <Compile Include="CToken.cs" />
     <Compile Include="DBService.cs" />
-    <Compile Include="Listen.cs" />
     <Compile Include="LoginService.cs" />
     <Compile Include="LoginSevice.cs" />
     <Compile Include="SocketAsyncEventArgsPool.cs" />

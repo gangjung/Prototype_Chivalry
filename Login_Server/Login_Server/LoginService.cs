@@ -13,22 +13,66 @@ namespace Login_Server
 {
     class LoginService
     {
+        // Listener
         private Socket listener;
-        private SocketAsyncEventArgs accept_event;
-        private SocketAsyncEventArgs receive_event;
-        private SocketAsyncEventArgs send_event;
-        // 이거 send, receive 두개 만드는게 좋다.
-        private AutoResetEvent autoResetEvent;
+
+        // EventArgs
+        private SocketAsyncEventArgs accept_event;        
+
+        // Pool
+        private SocketAsyncEventArgsPool receive_args_pool;
+        private SocketAsyncEventArgsPool send_args_pool;
+
+        // 이거 send, receive 두개 만드는게 좋다.(굳이 그럴 필요 없음)
+        private AutoResetEvent accept_event_control;
+
+        // 통신에 사용되는 모든 buffer를 관리
+        private BufferManager _bufferManager;
+
+        // Listen 수용량
         private int _wait_capacity;
 
         public LoginService(int wait_capacity)
         {
             _wait_capacity = wait_capacity;
+
+            Init();
+        }
+
+        private void Init()
+        {
             accept_event = new SocketAsyncEventArgs();
-            receive_event = new SocketAsyncEventArgs();
-            receive_event.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessReceive);
-            send_event = new SocketAsyncEventArgs();
-            send_event.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessSend);
+            
+            receive_args_pool = new SocketAsyncEventArgsPool(_wait_capacity);
+            send_args_pool = new SocketAsyncEventArgsPool(_wait_capacity);
+
+            accept_event.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessAccept);
+
+            // 최대 동접자 수 * (recieve, send) * buffersize
+            _bufferManager = new BufferManager(_wait_capacity * 2 * 1024, 1024);
+
+            for(int i = 0; i<_wait_capacity; i++)
+            {
+                // receive
+                {
+                    SocketAsyncEventArgs temp_receive = new SocketAsyncEventArgs();
+                    temp_receive.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessReceive);
+                    temp_receive.UserToken = null;
+                    // receive는 buffer를 사용.
+                    _bufferManager.SetBuffer(temp_receive);
+                    receive_args_pool.Push(temp_receive);
+                }
+
+                // send
+                {
+                    SocketAsyncEventArgs temp_send = new SocketAsyncEventArgs();
+                    temp_send.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessSend);
+                    temp_send.UserToken = null;
+                    // send는 bufferList를 사용.
+                    temp_send.BufferList = new List<ArraySegment<byte>>();
+                    send_args_pool.Push(temp_send);
+                }
+            }
         }
 
         public void Start(string ip, int port)
@@ -47,9 +91,8 @@ namespace Login_Server
                 listener.Bind(ipendpoint);
                 listener.Listen(_wait_capacity);
 
-                accept_event.Completed += new EventHandler<SocketAsyncEventArgs>(AcceptComplete);
-
-                Thread th = new Thread(Listening);
+                Thread th = new Thread(StartAccept);
+                // Background 처리해버리면 thread가 실행됨가 동시에 main thread가 종료되 프로세스가 종료된다.
                 //th.IsBackground = true;
                 th.Start();
             }
@@ -59,11 +102,11 @@ namespace Login_Server
             }
         }
 
-        private void Listening()
+        private void StartAccept()
         {
             bool pending;
 
-            autoResetEvent = new AutoResetEvent(false);
+            accept_event_control = new AutoResetEvent(false);
 
             while (true)
             {
@@ -80,26 +123,28 @@ namespace Login_Server
                     continue;
                 }
 
-                autoResetEvent.WaitOne();
+                accept_event_control.WaitOne();
 
                 if (pending == false)
-                    AcceptComplete(null, accept_event);
+                    ProcessAccept(null, accept_event);
             }
 
         }
 
-        private void AcceptComplete(object sender, SocketAsyncEventArgs e)
+        private void ProcessAccept(object sender, SocketAsyncEventArgs e)
         {
             if(e.SocketError == SocketError.Success)
             {
                 Console.WriteLine("Success to connect");
 
                 Socket client = e.AcceptSocket;
-                CToken token = new CToken();
-                token.client = client;
+                SocketAsyncEventArgs receive_args = receive_args_pool.Pop();
+                SocketAsyncEventArgs send_args = send_args_pool.Pop();
 
-                e.UserToken = token;
-                
+                CToken token = new CToken(e.AcceptSocket, receive_args, send_args);
+                receive_args.UserToken = token;
+                send_args.UserToken = token;
+
                 Receive(token);
             }
             else
@@ -107,22 +152,21 @@ namespace Login_Server
                 Console.WriteLine("Fail to Connect");
             }
 
-            autoResetEvent.Set();
+            accept_event_control.Set();
         }
 
-        private void Receive(CToken packet)
+        private void Receive(CToken token)
         {
             // 이부분처럼 버퍼를 셋 안해주면 오류 발생함.
-            receive_event.SetBuffer(new byte[1024], 0, 1024);
-            receive_event.UserToken = packet;
+            //token.receive_args.SetBuffer(new byte[1024], 0, 1024);
+            //token.receive_args.UserToken = token;
                 
-            bool pending = packet.client.ReceiveAsync(receive_event);
+            bool pending = token.client.ReceiveAsync(token.receive_args);
 
             if(pending == false)
             {
-                ProcessReceive(null, receive_event);
+                ProcessReceive(null, token.receive_args);
             }
-
         }
 
         private void ProcessReceive(object sender, SocketAsyncEventArgs e)
@@ -157,20 +201,20 @@ namespace Login_Server
             }
         }
 
-        private void Send(CToken usertoken)
+        private void Send(CToken token)
         {
             List<ArraySegment<byte>> list = new List<ArraySegment<byte>>();
-            list.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(usertoken.token)));
-            list.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(usertoken.port)));
+            list.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(token.token)));
+            list.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(token.port)));
 
-            send_event.BufferList = list;
-            send_event.UserToken = usertoken;
+            token.send_args.BufferList = list;
+            //token.send_args.UserToken = token;
 
-            bool pending = usertoken.client.SendAsync(send_event);
+            bool pending = token.client.SendAsync(token.send_args);
 
             if(pending == false)
             {
-                ProcessSend(null, send_event);
+                ProcessSend(null, token.send_args);
             }
             
         }

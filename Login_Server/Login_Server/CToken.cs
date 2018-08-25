@@ -10,6 +10,9 @@ namespace Login_Server
     class CToken
     {
         public Socket client;
+        public SocketAsyncEventArgs receive_args;
+        public SocketAsyncEventArgs send_args;
+
         public bool isComplete;
         public string token;
         public string port;
@@ -25,8 +28,12 @@ namespace Login_Server
         private int totalDataSize;
         private int currentIdx;
 
-        public CToken()
+        public CToken(Socket client, SocketAsyncEventArgs receive_args, SocketAsyncEventArgs send_args)
         {
+            this.client = client;
+            this.receive_args = receive_args;
+            this.send_args = send_args;
+
             isComplete = false;
             HEADERSIZE = 2;
             buffer = new byte[1024];
@@ -38,7 +45,7 @@ namespace Login_Server
             int copysize = 0;
             int remainSize = bytesize;
 
-            // 헤더파일을 읽고나서 남아있는 부분을 일거우기 위해 반복문을 사용.
+            // 헤더파일을 읽고나서 남아있는 부분을 읽어오기 위해 반복문을 사용.
             while (remainSize > 0)
             {
                 if (currentIdx < HEADERSIZE)
