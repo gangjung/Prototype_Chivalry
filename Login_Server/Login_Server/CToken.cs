@@ -28,6 +28,7 @@ namespace Login_Server
         private int totalDataSize;
         private int currentIdx;
 
+        // 유저 토큰
         public CToken(Socket client, SocketAsyncEventArgs receive_args, SocketAsyncEventArgs send_args)
         {
             this.client = client;
