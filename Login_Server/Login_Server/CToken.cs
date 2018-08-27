@@ -40,6 +40,7 @@ namespace Login_Server
             buffer = new byte[1024];
         }
 
+        // 받았을 때
         public void OnReceive(byte[] buffer, int offset, int bytesize)
         {
             int bufferIdx = offset;
